@@ -313,10 +313,10 @@ namespace NoteBlitz
 
                     if (currentVersion.CompareTo(updateVersion) < 0)
                     {
-                        //new version available
-                        if (MessageBox.Show(this, "New version of NoteBlitz available: " + updateVersion.ToString() + "\nDo you want to update?", "Update available", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        Dispatcher.BeginInvoke(new Action(() =>
                         {
-                            Dispatcher.BeginInvoke(new Action(() =>
+                            //new version available
+                            if (MessageBox.Show(this, "New version of NoteBlitz available: " + updateVersion.ToString() + "\nDo you want to update?", "Update available", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                             {
                                 //Run the updater
                                 ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -327,8 +327,8 @@ namespace NoteBlitz
 
                                 this.Close();
                                 Environment.Exit(0);
-                            }));
-                        }
+                            }
+                        }));
                     }
                 }
             });
@@ -364,7 +364,7 @@ namespace NoteBlitz
 
             this.Visibility = Visibility.Visible;
 
-            if(data.CheckForUpdates)
+            if (data.CheckForUpdates)
             {
                 CheckForUpdate();
             }
