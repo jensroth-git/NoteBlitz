@@ -1,0 +1,45 @@
+﻿<Window x:Class="NoteBlitz.Settings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NoteBlitz"
+        mc:Ignorable="d"
+        Title="Settings" Height="213" Width="400" SizeToContent="Height" WindowStartupLocation="CenterOwner" Style="{DynamicResource CustomToolWindowStyle}" WindowStyle="ToolWindow" ResizeMode="NoResize">
+    <StackPanel Margin="10">
+        <GroupBox Header="Hotkey" Margin="0,0,0,10">
+            <StackPanel Margin="0,10,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox Name="AltCheck"
+                                                  Height="16"
+                                                  Margin="0,5,0,0"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Top"
+                                                  Content="Alt"
+                          IsChecked="{Binding Path=data.HotAlt}"/>
+                <Label Margin="5,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Content="+" />
+                <CheckBox Name="ControlCheck"
+                                                  Height="16"
+                                                  Margin="5,5,0,0"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Top"
+                                                  Content="Control"
+                          IsChecked="{Binding Path=data.HotControl}"/>
+                <Label Margin="5,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Content="+" />
+                <CheckBox Name="ShiftCheck"
+                                                  Height="16"
+                                                  Margin="5,5,0,0"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Top"
+                                                  Content="Shift"
+                          IsChecked="{Binding Path=data.HotShift}"/>
+                <Label Margin="5,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Content="+" />
+
+                <Button x:Name="btnHotKey" Width="100" Height="30" Click="btnHotKey_Click" PreviewKeyDown="btnHotKey_PreviewKeyDown" />
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Header="Behaviour" >
+            <CheckBox Content="Hide window when opening links" IsChecked="{Binding Path=data.HideWindowOnShortcutOpen}" />
+        </GroupBox>
+    </StackPanel>
+</Window>

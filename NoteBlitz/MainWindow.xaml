@@ -1,0 +1,90 @@
+﻿<Window x:Class="NoteBlitz.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NoteBlitz"
+        mc:Ignorable="d"
+        Title="NoteBlitz" Height="0" Width="0" WindowStartupLocation="Manual" Icon="/res/icon.ico" Topmost="True" Style="{DynamicResource CustomWindowStyle}" Background="#dd000000">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <local:InvertableBooleanToVisibilityConverter x:Key="InverseBoolToVis" />
+    </Window.Resources>
+    
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem x:Name="miSettings" Header="Settings" Click="miSettings_Click"/>
+            <MenuItem x:Name="miQuit" Header="Quit" Click="miQuit_Click"/>
+        </Menu>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            
+            <Grid Grid.Column="0" HorizontalAlignment="Stretch">
+                <ListBox x:Name="lbFiles" SelectionMode="Single" BorderThickness="0">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="miNewFile" Header="New file" Click="miNewFile_Click" Height="30"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type local:UIFile}">
+                            <Grid HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" Height="30" Background="#01000000" >
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem x:Name="miDelete" Header="Delete file" Click="miDelete_Click" Height="30"/>
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+                                
+                                <Image Source="res/edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                                <TextBox x:Name="tbxName" Text="{Binding Name, Mode=TwoWay}" VerticalAlignment="Center" Margin="10,0,0,0" Visibility="{Binding Path=EditingName, Converter={StaticResource BoolToVis}}" LostKeyboardFocus="UIFileTextbox_LostKeyboardFocus" PreviewKeyDown="tbxName_PreviewKeyDown"/>
+                                <TextBlock Text="{Binding Name}" MinWidth="10" Background="#01000000" VerticalAlignment="Center" Margin="10,0,0,0" Visibility="{Binding Path=EditingName, Converter={StaticResource InverseBoolToVis}, ConverterParameter=Inverted}" PreviewMouseLeftButtonDown="UIFileName_PreviewMouseLeftButtonDown"/>
+                            </StackPanel>
+
+                                <Canvas Width="24" Height="24" HorizontalAlignment="Right" VerticalAlignment="Center" Cursor="Hand" Background="#01000000">
+                                    <Path Fill="#33ffffff" Data="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+                                </Canvas>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+            
+            <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left" Background="#11ffffff"/>
+            
+            <RichTextBox x:Name="rtbMain" Grid.Column="1" IsDocumentEnabled="True" VerticalScrollBarVisibility="Auto" BorderThickness="0" Background="{x:Null}" Margin="10" FontSize="14" CaretBrush="White">
+
+                <RichTextBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Cut" Command="ApplicationCommands.Cut"/>
+                        <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
+                        <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
+                    </ContextMenu>
+                </RichTextBox.ContextMenu>
+                
+                <RichTextBox.Resources>
+                    <Style TargetType="Paragraph">
+                        <Setter Property="Margin" Value="0" />
+                    </Style>
+                    <Style TargetType="Image">
+                        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality" />
+                        <Setter Property="VerticalAlignment" Value="Top" />
+                    </Style>
+                    <Style TargetType="Run">
+                        <Setter Property="Foreground" Value="White" />
+                    </Style>
+                    <Style TargetType="Hyperlink">
+                        <Setter Property="Foreground" Value="#FF94CEFF" />
+                        <EventSetter Event="RequestNavigate" Handler="Hyperlink_RequestNavigate" />
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
+        </Grid>
+    </DockPanel>
+</Window>
