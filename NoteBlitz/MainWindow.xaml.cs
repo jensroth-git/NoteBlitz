@@ -6,6 +6,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,6 +53,7 @@ namespace NoteBlitz
         public Key HotKey { get; set; }
 
         public bool HideWindowOnShortcutOpen { get; set; }
+        public bool CheckForUpdates { get; set; }
 
         public Data()
         {
@@ -58,6 +61,7 @@ namespace NoteBlitz
             HotKey = Key.Space;
 
             HideWindowOnShortcutOpen = true;
+            CheckForUpdates = true;
         }
     }
 
@@ -256,7 +260,81 @@ namespace NoteBlitz
 
             this.Visibility = Visibility.Hidden;
         }
-        
+
+        #region Update
+        public static bool GetUpdateInfo(out string updateURL, out string updateVersion)
+        {
+            updateVersion = null;
+            updateURL = null;
+
+            try
+            {
+                string UpdateInfoURL = "https://api.github.com/repos/MrC0rrupted/NoteBlitz/releases/latest";
+
+                using (var wc = new WebClient())
+                {
+                    wc.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36");
+                    string json = wc.DownloadString(UpdateInfoURL);
+
+                    Regex versionRegex = new Regex(@"\""tag_name\"":\s\""v\.(.+?)\""");
+                    Regex downloadRegex = new Regex(@"\""browser_download_url\"":\s\""(.+?)\""");
+
+                    var versionMatch = versionRegex.Match(json);
+                    var downloadMatch = downloadRegex.Match(json);
+
+                    if (versionMatch.Success && downloadMatch.Success)
+                    {
+                        updateVersion = versionMatch.Groups[1].Value;
+                        updateURL = downloadMatch.Groups[1].Value;
+
+                        return true;
+                    }
+
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+
+        void CheckForUpdate()
+        {
+            Task.Factory.StartNew(() =>
+            {
+                string version, url;
+
+                if (GetUpdateInfo(out url, out version))
+                {
+                    Version updateVersion = new Version(version);
+
+                    Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+
+                    if (currentVersion.CompareTo(updateVersion) < 0)
+                    {
+                        //new version available
+                        if (MessageBox.Show(this, "New version of NoteBlitz available: " + updateVersion.ToString() + "\nDo you want to update?", "Update available", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        {
+                            Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                //Run the updater
+                                ProcessStartInfo startInfo = new ProcessStartInfo();
+                                startInfo.UseShellExecute = true;
+                                startInfo.FileName = "Update.exe";
+
+                                Process.Start(startInfo);
+
+                                this.Close();
+                                Environment.Exit(0);
+                            }));
+                        }
+                    }
+                }
+            });
+        }
+        #endregion
+
         #region Window Utils
         private void ShowWindow()
         {
@@ -285,6 +363,11 @@ namespace NoteBlitz
             }
 
             this.Visibility = Visibility.Visible;
+
+            if(data.CheckForUpdates)
+            {
+                CheckForUpdate();
+            }
         }
 
         private void HideWindow()
@@ -418,7 +501,7 @@ namespace NoteBlitz
                 }
 
             }
-        } 
+        }
         #endregion
 
         #region Sidebar
@@ -536,7 +619,7 @@ namespace NoteBlitz
 
         private void LvFiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(e.RemovedItems.Count != 0)
+            if (e.RemovedItems.Count != 0)
             {
                 var previousSelectedFile = e.RemovedItems[0] as UIFile;
 
@@ -546,8 +629,8 @@ namespace NoteBlitz
                 //save offset
                 previousSelectedFile.File.VerticalOffset = rtbMain.VerticalOffset;
             }
-        
-            if(e.AddedItems.Count != 0)
+
+            if (e.AddedItems.Count != 0)
             {
                 var selectedFile = e.AddedItems[0] as UIFile;
 
@@ -758,7 +841,7 @@ namespace NoteBlitz
             if (!Shown)
                 return;
 
-            if(WindowState == WindowState.Minimized)
+            if (WindowState == WindowState.Minimized)
             {
                 data.Left = RestoreBounds.Left;
                 data.Top = RestoreBounds.Top;
@@ -788,7 +871,7 @@ namespace NoteBlitz
             string json = JsonConvert.SerializeObject(data, Formatting.Indented);
 
             File.WriteAllText(jsonFile, json);
-        } 
+        }
         #endregion
 
         #region Document Management
@@ -1012,7 +1095,7 @@ namespace NoteBlitz
             var hyperlink = (Hyperlink)sender;
             Process.Start(new ProcessStartInfo { FileName = hyperlink.NavigateUri.ToString(), UseShellExecute = true });
 
-            if(data.HideWindowOnShortcutOpen)
+            if (data.HideWindowOnShortcutOpen)
             {
                 HideWindow();
             }
