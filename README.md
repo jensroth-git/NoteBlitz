@@ -1,4 +1,4 @@
-![NoteBlitz](images/noteblitz.01.png?raw=true "NoteBlitz")
+![NoteBlitz](images/noteblitz.horizontal.png?raw=true "NoteBlitz")
 
 # NoteBlitz
 ## Notes and project management
