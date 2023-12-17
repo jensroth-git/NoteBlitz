@@ -38,10 +38,11 @@
                                 <StackPanel.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem x:Name="miDelete" Header="Delete file" Click="miDelete_Click" Height="30"/>
-                                    </ContextMenu>
+                                            <MenuItem x:Name="miResetIcon" Header="Reset icon" Click="miResetIcon_Click" Height="30"/>
+                                        </ContextMenu>
                                 </StackPanel.ContextMenu>
                                 
-                                <Image Source="res/edit.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
 
                                 <TextBox x:Name="tbxName" Text="{Binding Name, Mode=TwoWay}" VerticalAlignment="Center" Margin="10,0,0,0" Visibility="{Binding Path=EditingName, Converter={StaticResource BoolToVis}}" LostKeyboardFocus="UIFileTextbox_LostKeyboardFocus" PreviewKeyDown="tbxName_PreviewKeyDown"/>
                                 <TextBlock Text="{Binding Name}" MinWidth="10" Background="#01000000" VerticalAlignment="Center" Margin="10,0,0,0" Visibility="{Binding Path=EditingName, Converter={StaticResource InverseBoolToVis}, ConverterParameter=Inverted}" PreviewMouseLeftButtonDown="UIFileName_PreviewMouseLeftButtonDown"/>
@@ -57,7 +58,7 @@
             </Grid>
             
             <GridSplitter Grid.Column="1" Width="5" VerticalAlignment="Stretch" HorizontalAlignment="Left" Background="#11ffffff"/>
-            
+
             <RichTextBox x:Name="rtbMain" Grid.Column="1" IsDocumentEnabled="True" VerticalScrollBarVisibility="Auto" BorderThickness="0" Background="{x:Null}" Margin="10" FontSize="14" CaretBrush="White">
 
                 <RichTextBox.ContextMenu>

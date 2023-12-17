@@ -16,14 +16,16 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using Point = System.Windows.Point;
 
 namespace NoteBlitz
 {
     public class DataFile
     {
         public string Name { get; set; }
-        public string Icon { get; set; }
+        public byte[] IconData { get; set; }
 
         public string Document { get; set; }
         public double VerticalOffset { get; set; }
@@ -84,7 +86,12 @@ namespace NoteBlitz
             }
         }
 
-        public string Icon { get; set; }
+        public BitmapSource Icon { get; set; }
+
+        public void RefreshIcon()
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Icon"));
+        }
 
         private bool editingName = false;
         public bool EditingName
@@ -101,11 +108,26 @@ namespace NoteBlitz
             }
         }
 
+        public async void InitIcon(byte[] data)
+        {
+            //convert icon 
+            if (data == null || data.Length == 0)
+            {
+                Icon = new BitmapImage(new Uri("pack://application:,,,/NoteBlitz;component/res/edit.png"));
+            }
+            else
+            {
+                Icon = Utils.LoadImageFromByteArray(data);
+            }
+        }
+
         public UIFile(DataFile file)
         {
             File = file;
             Name = file.Name;
-            Icon = file.Icon;
+
+            InitIcon(file.IconData);
+
             EditingName = false;
         }
 
@@ -122,7 +144,7 @@ namespace NoteBlitz
 
         public ObservableCollection<UIFile> files;
 
-        private Point _dragStartPoint;
+        private System.Windows.Point _dragStartPoint;
         bool Initializing = false;
         bool Moving = false;
 
@@ -417,9 +439,9 @@ namespace NoteBlitz
 
                 foreach (string file in files)
                 {
-                    string extension = System.IO.Path.GetExtension(file);
+                    string extension = System.IO.Path.GetExtension(file).ToLower();
 
-                    if (extension == ".png" || extension == ".jpg" || extension == ".jpeg")
+                    if (extension == ".bmp" || extension == ".png" || extension == ".jpg" || extension == ".jpeg")
                     {
                         rtbMain.PasteImageFiles(file);
 
@@ -579,13 +601,55 @@ namespace NoteBlitz
         {
             if (sender is ListBoxItem)
             {
-                var source = e.Data.GetData(typeof(UIFile)) as UIFile;
                 var target = ((ListBoxItem)(sender)).DataContext as UIFile;
 
-                int sourceIndex = lbFiles.Items.IndexOf(source);
-                int targetIndex = lbFiles.Items.IndexOf(target);
+                string[] files = e.Data.GetData(DataFormats.FileDrop) as string[];
 
-                Move(source, sourceIndex, targetIndex);
+                if (files != null && files.Count() > 0)
+                {
+                    //set as new icon
+                    if (!File.Exists(files[0]))
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        var ext = Path.GetExtension(files[0]).ToLower();
+
+                        BitmapSource image = null;
+
+                        if (ext == ".ico" || ext == ".bmp" || ext == ".jpg" || ext == ".png" || ext == ".jpeg")
+                        {
+                            image = Utils.LoadBitmapImage(files[0], 128);
+                        }
+                        else
+                        {
+                            //not an image, load icon 
+                            image = GetIcon.GetIcon.FromPath(files[0]);
+                        }
+
+                        var bytes = Utils.SaveImageToByteArray(image);
+
+                        target.Icon = image;
+                        target.File.IconData = bytes;
+
+                        target.RefreshIcon();
+                    }
+                    catch { }
+                }
+                else
+                {
+
+                    var source = e.Data.GetData(typeof(UIFile)) as UIFile;
+                    if (source != null && target != null)
+                    {
+                        int sourceIndex = lbFiles.Items.IndexOf(source);
+                        int targetIndex = lbFiles.Items.IndexOf(target);
+
+                        Move(source, sourceIndex, targetIndex);
+                    }
+                }
             }
         }
 
@@ -706,7 +770,7 @@ namespace NoteBlitz
         #endregion
 
         #region Adorn Images
-        void AdornImage(Image image)
+        void AdornImage(System.Windows.Controls.Image image)
         {
             try
             {
@@ -757,9 +821,9 @@ namespace NoteBlitz
                             if (inline is InlineUIContainer)
                             {
                                 var uiblock = inline as InlineUIContainer;
-                                if (uiblock.Child is Image)
+                                if (uiblock.Child is System.Windows.Controls.Image)
                                 {
-                                    var image = uiblock.Child as Image;
+                                    var image = uiblock.Child as System.Windows.Controls.Image;
                                     AdornImage(image);
                                 }
                             }
@@ -770,9 +834,9 @@ namespace NoteBlitz
                 {
                     var uiblock = block as BlockUIContainer;
 
-                    if (uiblock.Child is Image)
+                    if (uiblock.Child is System.Windows.Controls.Image)
                     {
-                        var image = uiblock.Child as Image;
+                        var image = uiblock.Child as System.Windows.Controls.Image;
                         AdornImage(image);
                     }
                 }
@@ -832,7 +896,7 @@ namespace NoteBlitz
             data.Width = Width;
             data.Height = Height;
 
-            data.files = new List<DataFile>() { new DataFile() { Name = "Notes", Icon = "res/edit.png" } };
+            data.files = new List<DataFile>() { new DataFile() { Name = "Notes" } };
             data.SelectedFile = 0;
         }
 
@@ -969,7 +1033,7 @@ namespace NoteBlitz
 
         private void miNewFile_Click(object sender, RoutedEventArgs e)
         {
-            var newFile = new DataFile() { Name = "new file", Icon = "res/edit.png" };
+            var newFile = new DataFile() { Name = "new file" };
             var newUIFile = new UIFile(newFile);
 
             data.files.Add(newFile);
@@ -990,6 +1054,16 @@ namespace NoteBlitz
                 rtbMain.IsEnabled = false;
                 rtbMain.Document.Blocks.Clear();
             }
+        }
+
+        private void miResetIcon_Click(object sender, RoutedEventArgs e)
+        {
+            var uiFile = (sender as FrameworkElement).DataContext as UIFile;
+
+            uiFile.File.IconData = null;
+
+            uiFile.InitIcon(null);
+            uiFile.RefreshIcon();
         }
 
         private async void UIFileName_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1054,7 +1128,7 @@ namespace NoteBlitz
                 {
                     foreach (Inline inline in paragraph.Inlines)
                     {
-                        if (inline is Run run && run.Foreground != Brushes.Red)
+                        if (inline is Run run && run.Foreground != System.Windows.Media.Brushes.Red)
                         {
                             Regex urlRegex = new Regex(@"(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'"".,<>?«»“”‘’]))");
                             Match m = urlRegex.Match(run.Text);
@@ -1100,5 +1174,7 @@ namespace NoteBlitz
                 HideWindow();
             }
         }
+
+
     }
 }
